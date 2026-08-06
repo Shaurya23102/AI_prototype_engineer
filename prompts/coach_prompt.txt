@@ -55,10 +55,9 @@ For each gap identified above, provide:
 ## 🏆 Overall Rating
 
 Provide ONE of these ratings with a 2–3 sentence justification:
-- **Strong Hire** — Consistently strong answers, deep expertise, excellent communication
-- **Lean Hire** — Mostly solid with minor gaps that are easily addressable
-- **Lean No-Hire** — Some strengths but significant gaps in core areas
-- **No-Hire** — Fundamental gaps in knowledge or communication
+- **Strong Hire** — Consistently strong answers, deep expertise, excellent communication. Average scores mostly 7+.
+- **Tricky Select** — Mixed performance: some solid answers but also noticeable gaps. The candidate is borderline — could go either way with more preparation. Average scores around 4–6.
+- **Not Good Hire** — Fundamental gaps in knowledge or communication. Struggled with most questions, gave vague or incorrect answers. Average scores mostly below 4.
 
 ---
 

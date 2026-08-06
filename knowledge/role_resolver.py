@@ -59,9 +59,14 @@ ROLE_ALIASES: dict[str, str] = {
     # Data Scientist
     "data scientist": "Data_Scientist",
     "data science": "Data_Scientist",
-    "data analyst": "Data_Scientist",
     "ml scientist": "Data_Scientist",
     "research scientist": "Data_Scientist",
+
+    # Data Analyst (separate role in roles1.json)
+    "data analyst": "Data_Analyst",
+    "analyst": "Data_Analyst",
+    "business analyst": "Data_Analyst",
+    "bi analyst": "Data_Analyst",
 }
 
 # ── Persona Mapping ──────────────────────────────────────────────────
@@ -72,6 +77,7 @@ ROLE_PERSONAS: dict[str, str] = {
     "Backend_Engineer": "a Staff Backend Engineer and tech lead at a high-scale distributed systems company",
     "Product_Manager": "a VP of Product at a fast-growing SaaS company",
     "Data_Scientist": "a Head of Data Science at a data-driven enterprise",
+    "Data_Analyst": "a Senior Analytics Manager at a data-driven enterprise",
     "General_Interview_Mode": "a seasoned Senior Hiring Manager at a technology company",
 }
 

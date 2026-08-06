@@ -1,0 +1,378 @@
+{
+  "roles": {
+    "Software_Development_Engineer": {
+      "focus_areas": {
+        "technical": [
+          ["Arrays", "store_elements_in", "Contiguous Memory Locations"],
+          ["Hash Maps", "enable_constant_time_lookup_via", "Key-Value Pairs"],
+          ["Binary Search", "find_elements_efficiently_in", "Sorted Arrays"],
+          ["Recursion", "solve_problems_by_breaking_them_into", "Smaller Subproblems"],
+          ["Linked Lists", "chain_nodes_together_using", "Pointer References"],
+          ["REST APIs", "expose_service_endpoints_through", "HTTP Methods"],
+          ["SQL Joins", "combine_rows_from", "Multiple Relational Tables"],
+          ["Git Branching", "isolate_feature_development_using", "Parallel Version History"],
+          ["Stacks", "support_last_in_first_out_operations_via", "Push and Pop Methods"],
+          ["Queues", "handle_first_in_first_out_processing_using", "Enqueue and Dequeue Operations"],
+          ["Big O Notation", "measure_algorithmic_efficiency_in_terms_of", "Time and Space Complexity"],
+          ["Object-Oriented Programming", "organize_code_around", "Classes and Inheritance Hierarchies"],
+          ["Dynamic Programming", "optimize_recursive_solutions_by_storing", "Intermediate Subproblem Results"],
+          ["TCP Handshake", "establish_reliable_connections_using", "Three-Way SYN-SYN-ACK Exchange"],
+          ["DNS Resolution", "translate_human_readable_domains_into", "Machine Routable IP Addresses"],
+          ["JSON Schema", "validate_payload_structures_against", "Predefined Data Contracts"],
+          ["Environment Variables", "configure_applications_dynamically_without", "Hardcoding Sensitive Values"],
+          ["Semantic Versioning", "communicate_api_changes_through", "Major-Minor-Patch Numbering"],
+          ["Virtual Memory", "abstract_physical_RAM_limits_using", "Disk-Backed Page Swapping"],
+          ["Compiler Steps", "transform_source_code_into_machine_code_via", "Lexing-Parsing-Codegen Stages"]
+        ],
+        "behavioral": [
+          ["Agile Sprints", "structure_team_workflows_around", "Two-Week Iterative Cycles"],
+          ["Code Reviews", "improve_code_quality_through", "Peer Feedback Loops"],
+          ["Merge Conflicts", "resolve_team_bottlenecks_via", "Collaborative Communication"],
+          ["Standup Meetings", "align_daily_progress_with", "Sprint Goals"],
+          ["Technical Debt", "balance_feature_speed_against", "Long-Term Maintainability"],
+          ["Mentorship", "accelerate_junior_growth_through", "Structured Code Pairing Sessions"],
+          ["Incident Postmortems", "build_blameless_culture_by_focusing_on", "Systemic Process Fixes"],
+          ["Cross-Functional Sync", "coordinate_deliverables_between", "Product-Design-Engineering Triads"],
+          ["Estimation Accuracy", "improve_sprint_commitments_by_reflecting_on", "Historical Velocity Data"],
+          ["Documentation Habits", "reduce_onboarding_friction_through", "Well-Maintained README Files"]
+        ],
+        "case": [
+          ["LRU Cache", "evict_least_recently_used_entries_using", "Doubly Linked List and Hash Map"],
+          ["TinyURL Design", "shorten_long_urls_via", "Base62 Encoding and Hash Mapping"],
+          ["Rate Limiter", "throttle_incoming_requests_using", "Token Bucket Algorithm"],
+          ["Chat System Architecture", "deliver_messages_in_real_time_via", "WebSocket Connections"],
+          ["Leaderboard Design", "rank_top_scores_efficiently_using", "Sorted Sets in Redis"],
+          ["Pastebin Service", "store_text_snippets_with", "Unique UUID Keys and Expiry TTLs"],
+          ["Distributed ID Generator", "produce_globally_unique_identifiers_using", "Snowflake Algorithm"],
+          ["Notification System", "fan_out_alerts_to_millions_via", "Message Queue and Push Providers"],
+          ["File Storage Service", "chunk_large_uploads_and_reassemble_using", "Multipart Upload Protocols"],
+          ["Search Autocomplete", "suggest_top_queries_based_on", "Trie Data Structure Prefix Matching"]
+        ],
+        "mixed": [
+          ["Pair Programming", "enhance_code_quality_and_knowledge_sharing_through", "Real-Time Collaboration"],
+          ["Load Balancers", "distribute_traffic_evenly_across", "Multiple Application Servers"],
+          ["Microservices", "decompose_monolithic_apps_into", "Independently Deployable Services"],
+          ["Unit Testing", "validate_individual_functions_using", "Automated Test Suites"],
+          ["Canary Deployments", "release_features_gradually_to", "Small Subset of Production Users"],
+          ["Feature Flags", "toggle_functionality_at_runtime_without", "Redeploying Application Code"],
+          ["Monitoring Dashboards", "alert_engineers_about_anomalies_via", "Grafana and Prometheus Integrations"],
+          ["Database Sharding", "scale_writes_horizontally_by_partitioning_data_on", "User ID Hash Keys"],
+          ["Blue-Green Deployment", "achieve_zero_downtime_releases_using", "Identical Staging and Production Environments"],
+          ["CAP Trade-offs", "choose_availability_over_consistency_during", "Network Partition Events"]
+        ]
+      }
+    },
+    "AI_ML_Engineer": {
+      "focus_areas": {
+        "technical": [
+          ["Linear Regression", "predict_continuous_values_by_fitting", "Best-Fit Straight Line"],
+          ["Decision Trees", "split_data_based_on", "Feature Importance Thresholds"],
+          ["Gradient Descent", "minimize_loss_functions_by_iteratively_updating", "Model Weights"],
+          ["Overfitting", "occurs_when_model_memorizes", "Training Data Noise"],
+          ["Cross-Validation", "evaluate_model_robustness_using", "K-Fold Data Partitioning"],
+          ["Activation Functions", "introduce_non-linearity_into", "Neural Network Layers"],
+          ["Epoch", "represents_one_complete_pass_through", "Entire Training Dataset"],
+          ["Feature Scaling", "normalize_input_values_to_improve", "Model Convergence Speed"],
+          ["BLEU Score", "measure_machine_translation_quality_using", "N-Gram Precision Overlap"],
+          ["ROUGE Score", "evaluate_text_summarization_via", "Recall-Oriented N-Gram Matching"],
+          ["Perplexity", "assess_language_model_confidence_by_computing", "Inverse Probability of Test Sequences"],
+          ["LangChain", "orchestrate_LLM_workflows_through", "Chainable Prompt and Tool Abstractions"],
+          ["LangGraph", "model_agent_state_machines_using", "Directed Cyclic Graph Executions"],
+          ["Hallucination", "produce_factually_incorrect_outputs_when", "Model Lacks Grounding Context"],
+          ["Vector Embeddings", "map_semantic_meaning_of_words_into", "Dense Numerical Vector Spaces"],
+          ["Prompt Engineering", "guide_model_behavior_by_crafting", "Instruction-Tuned System Messages"],
+          ["RAG Pipeline", "augment_LLM_responses_with", "Retrieved Chunks from External Knowledge Bases"],
+          ["AI Agents", "autonomously_execute_multi_step_plans_using", "Tool Calling and Reasoning Loops"],
+          ["Tokenization", "split_raw_text_into", "Subword Units for Model Input Processing"],
+          ["Fine-Tuning", "adapt_pretrained_models_to_specific_tasks_using", "Domain-Specific Labeled Data"],
+          ["Transformer Architecture", "process_sequences_in_parallel_via", "Self-Attention Mechanisms"],
+          ["Temperature Parameter", "control_randomness_of_generated_output_by", "Scaling Logits Before Softmax"],
+          ["RLHF", "align_model_preferences_with_human_feedback_through", "Reward Model Training"],
+          ["Mixture of Experts", "dynamically_route_tokens_to", "Specialized Feed-Forward Subnetworks"]
+        ],
+        "behavioral": [
+          ["Model Documentation", "communicate_assumptions_and_limitations_through", "Technical Model Cards"],
+          ["A/B Testing", "compare_model_performance_in", "Controlled Production Environments"],
+          ["Stakeholder Presentations", "translate_complex_metrics_into", "Actionable Business Insights"],
+          ["Peer Model Reviews", "validate_model_architecture_choices_via", "Cross-Functional Feedback"],
+          ["Failure Analysis", "diagnose_prediction_errors_by_examining", "Misclassified Edge Cases"],
+          ["Ethical AI Advocacy", "flag_potential_harms_by_auditing_datasets_for", "Demographic Representation Gaps"],
+          ["Reproducibility Champions", "share_training_configurations_and_seeds_in", "Version-Controlled Experiment Logs"],
+          ["Interdisciplinary Jargon", "bridge_communication_gaps_between", "Research Scientists and Software Engineers"],
+          ["Continuous Learning", "stay_current_with_arxiv_preprints_through", "Weekly Reading Groups"],
+          ["Responsible Deployment", "guardrail_outputs_to_prevent", "Toxic or Biased Content Generation"]
+        ],
+        "case": [
+          ["Spam Classifier", "categorize_emails_using", "Naive Bayes Probability Estimation"],
+          ["Movie Recommender", "suggest_films_based_on", "Collaborative Filtering Patterns"],
+          ["Image Classifier", "label_pictures_using", "Convolutional Neural Networks"],
+          ["Chatbot Pipeline", "process_user_queries_through", "Intent Recognition and Entity Extraction"],
+          ["Customer Support Agent", "retrieve_knowledge_base_articles_before", "Generating Contextual Answers"],
+          ["Semantic Search Engine", "rank_documents_by_relevance_using", "Cosine Similarity of Dense Embeddings"],
+          ["Text Summarizer", "condense_articles_into_concise_abstracts_via", "Sequence-to-Sequence Transformers"],
+          ["Code Copilot", "autocomplete_programming_snippets_by_training_on", "Public Repository Code Corpora"],
+          ["Multimodal Assistant", "answer_questions_about_uploaded_images_using", "Vision-Language Pretrained Models"],
+          ["Real-Time Translator", "convert_speech_to_text_then_translate_using", "Cascaded ASR and NMT Models"]
+        ],
+        "mixed": [
+          ["Data Leakage", "inflates_model_performance_when", "Training Data Contains Target Information"],
+          ["Bias-Variance Tradeoff", "balancing_simplicity_against_accuracy_in", "Model Selection Process"],
+          ["Experiment Tracking", "log_hyperparameters_and_results_using", "Reproducible ML Pipelines"],
+          ["Model Deployment", "serve_predictions_to_production_via", "Containerized Inference Endpoints"],
+          ["Latency vs Accuracy", "trade_off_model_size_for_faster_inference_on", "Edge Hardware Devices"],
+          ["Guardrails Implementation", "enforce_output_format_schemas_using", "Constrained Decoding Libraries"],
+          ["Feedback Loops", "capture_user_thumbs_up_down_signals_to", "Trigger Model Retraining Pipelines"],
+          ["Cost Optimization", "monitor_token_usage_and_cache_frequent_responses_to", "Reduce LLM API Spend"],
+          ["Human-in-the-Loop", "escalate_low_confidence_predictions_to", "Human Review Queues"],
+          ["Synthetic Data Generation", "augment_scarce_training_datasets_by_prompting", "Large Teacher Models"]
+        ]
+      }
+    },
+    "Backend_Engineer": {
+      "focus_areas": {
+        "technical": [
+          ["Databases", "persist_application_state_in", "Structured Relational Tables"],
+          ["Caching", "reduce_latency_by_storing_frequent_data_in", "In-Memory Key-Value Stores"],
+          ["Authentication", "verify_user_identity_using", "JWT Tokens"],
+          ["API Gateways", "route_client_requests_to", "Appropriate Microservices"],
+          ["Docker Containers", "package_applications_with", "All Required Dependencies"],
+          ["Indexes", "speed_up_query_execution_by_organizing", "Database Table Columns"],
+          ["Message Brokers", "enable_async_communication_through", "Publisher-Subscriber Channels"],
+          ["Logging", "record_application_events_to", "Centralized Monitoring Dashboards"],
+          ["Load Balancing", "distribute_incoming_requests_across", "Healthy Server Pool Instances"],
+          ["SSL Termination", "decrypt_HTTPS_traffic_at", "Reverse Proxy Layer"],
+          ["Database Transactions", "ensure_atomic_multi_row_updates_via", "ACID Compliance Guarantees"],
+          ["Connection Pooling", "reuse_persistent_database_connections_to", "Avoid Expensive Handshake Overhead"],
+          ["Horizontal Partitioning", "split_large_tables_across_multiple_nodes_by", "Range or Hash Shard Keys"],
+          ["Redis", "store_ephemeral_session_data_using", "In-Memory Data Structures"],
+          ["Kubernetes Pods", "orchestrate_container_lifecycles_within", "Declarative Deployment Manifests"],
+          ["OAuth2 Flow", "delegate_user_authorization_through", "Authorization Code Grant Exchange"],
+          ["WebSockets", "maintain_persistent_bi-directional_connections_for", "Real-Time Event Streaming"],
+          ["gRPC", "enable_low_latency_service_communication_via", "Protobuf Serialization and HTTP2"],
+          ["Database Normalization", "eliminate_data_redundancy_by_decomposing_tables_into", "Third Normal Form"],
+          ["Dead Letter Queues", "isolate_unprocessed_messages_for_later_inspection_in", "Sidecar Error Handling Channels"]
+        ],
+        "behavioral": [
+          ["On-Call Rotations", "handle_production_incidents_through", "Scheduled Support Shifts"],
+          ["Sprint Retrospectives", "identify_process_improvements_during", "Post-Sprint Team Reflections"],
+          ["Cross-Team Collaboration", "align_backend_contracts_with", "Frontend and Mobile Teams"],
+          ["Root Cause Analysis", "investigate_system_failures_by_tracing", "Distributed Log Trails"],
+          ["Knowledge Transfer", "share_domain_expertise_through", "Internal Tech Talks and Wiki Docs"],
+          ["Runbook Creation", "codify_incident_response_procedures_to", "Reduce Mean Time to Resolution"],
+          ["Capacity Planning", "forecast_infrastructure_needs_based_on", "Historical Traffic Growth Trends"],
+          ["Empathy in API Design", "craft_developer_friendly_endpoints_by_considering", "Client-Side Integration Effort"],
+          ["Constructive Criticism", "deliver_code_review_feedback_focused_on", "Specific Improvement Suggestions"],
+          ["Ownership Mindset", "monitor_service_health_proactively_beyond", "Immediate Task Assignments"]
+        ],
+        "case": [
+          ["URL Shortener", "map_long_urls_to_short_codes_using", "Hash-Based Key Generation"],
+          ["Designing a Newsfeed", "aggregate_and_rank_posts_using", "Fanout-on-Write Pattern"],
+          ["Idempotency Keys", "prevent_duplicate_payment_processing_via", "Unique Request Identifiers"],
+          ["Distributed Locking", "coordinate_shared_resource_access_using", "Redis Redlock Algorithm"],
+          ["Video Streaming Service", "segment_content_into_chunks_and_serve_via", "Adaptive Bitrate CDN Delivery"],
+          ["Ride Matching Service", "geo-index_driver_locations_using", "QuadTree Spatial Partitioning"],
+          ["E-Commerce Checkout", "reserve_inventory_during_payment_processing_with", "Distributed Saga Transactions"],
+          ["API Rate Limiter", "enforce_per_user_quotas_using", "Sliding Window Counter in Redis"],
+          ["Notification Delivery", "retry_failed_push_attempts_with_exponential_backoff_on", "Mobile Device Token Errors"],
+          ["Metric Aggregation", "roll_up_event_counts_efficiently_in", "Time-Series Database Buckets"]
+        ],
+        "mixed": [
+          ["Horizontal Scaling", "add_more_server_instances_to_handle", "Increased Traffic Loads"],
+          ["CI/CD Pipelines", "automate_testing_and_deployment_through", "Continuous Integration Workflows"],
+          ["Database Migrations", "evolve_schema_safely_without", "Causing Application Downtime"],
+          ["Graceful Shutdown", "drain_in-flight_requests_before", "Terminating Server Processes"],
+          ["Circuit Breaker", "stop_calling_failing_service_temporarily_to", "Prevent Cascading System Failures"],
+          ["Blue-Green Deploy", "switch_traffic_instantly_between", "Two Identical Production Environments"],
+          ["Chaos Engineering", "introduce_controlled_failures_to", "Test System Resilience Assumptions"],
+          ["Service Mesh", "offload_retry_and_tls_logic_into", "Sidecar Proxy Containers"],
+          ["Feature Toggles", "launch_incomplete_features_darkly_behind", "Conditional Runtime Flags"],
+          ["Documentation as Code", "generate_live_api_docs_from", "OpenAPI Specification Files"]
+        ]
+      }
+    },
+    "Product_Manager": {
+      "focus_areas": {
+        "technical": [
+          ["User Stories", "capture_end_user_requirements_using", "As-a-I-want-So-that Format"],
+          ["Product Backlogs", "prioritize_pending_features_in", "Dynamic Ranked Lists"],
+          ["MVP", "validate_hypotheses_with", "Minimum Viable Product Scope"],
+          ["A/B Testing", "compare_feature_variants_to_optimize", "Conversion Rate Metrics"],
+          ["Wireframes", "sketch_user_interface_layouts_to_visualize", "User Experience Flows"],
+          ["Sprint Planning", "allocate_developer_capacity_based_on", "Story Point Estimations"],
+          ["Product Metrics", "track_adoption_and_retention_using", "DAU and MAU Funnels"],
+          ["Competitor Analysis", "benchmark_features_against", "Market Landscape Solutions"],
+          ["API Rate Limits", "understand_technical_constraints_around", "Third-Party Integration Call Volumes"],
+          ["Data Schemas", "discuss_data_contracts_with_engineers_using", "Entity-Relationship Diagrams"],
+          ["Latency Budgets", "define_acceptable_page_load_thresholds_in", "P95 Performance Targets"],
+          ["Webhooks", "receive_event_driven_callbacks_from", "External Platform Subscriptions"],
+          ["SDK Readiness", "prepare_developer_toolkits_for", "Public API Launch Partners"],
+          ["OAuth Scopes", "define_granular_permissions_for", "Third-Party Application Access"],
+          ["Error Codes", "standardize_api_error_responses_to", "Improve Developer Debugging Experience"],
+          ["Release Trains", "schedule_predictable_deployments_on", "Fixed Bi-Weekly Cadence Windows"],
+          ["Beta Features", "gate_experimental_functionality_behind", "Opt-In User Preference Flags"],
+          ["Usage Dashboards", "query_event_logs_to_understand", "Feature Adoption Funnels"]
+        ],
+        "behavioral": [
+          ["Stakeholder Alignment", "negotiate_scope_trade-offs_with", "Engineering and Business Leads"],
+          ["Customer Interviews", "uncover_pain_points_through", "Empathetic Discovery Conversations"],
+          ["Conflict Resolution", "mediate_disagreements_between", "Design and Engineering Teams"],
+          ["Roadmap Communication", "articulate_product_vision_to", "Executive Leadership Teams"],
+          ["Feedback Loops", "incorporate_user_input_into", "Iterative Feature Refinements"],
+          ["Influence Without Authority", "motivate_cross_functional_teams_through", "Clear Vision and Data-Backed Rationale"],
+          ["Saying No Gracefully", "decline_feature_requests_by_explaining", "Strategic Trade-Off Implications"],
+          ["Sales Partnership", "enable_account_executives_with", "Competitive Battle Cards and Product Demos"],
+          ["User Empathy", "shadow_customer_support_calls_to", "Witness Real Pain Points Firsthand"],
+          ["Retrospective Facilitation", "guide_teams_to_identify_process_improvements_in", "Blameless Brainstorming Sessions"]
+        ],
+        "case": [
+          ["Declining Engagement", "diagnose_user_churn_by_analyzing", "Cohort Retention Drop-Offs"],
+          ["Feature Prioritization", "rank_competing_initiatives_using", "RICE Scoring Framework"],
+          ["Pricing Model Design", "determine_value_metrics_based_on", "Customer Willingness-to-Pay Surveys"],
+          ["Go-To-Market Strategy", "launch_new_features_with", "Cross-Functional Release Checklists"],
+          ["Platform Monetization", "balance_ad_frequency_against", "User Retention Rates"],
+          ["International Expansion", "adapt_localization_requirements_around", "Cultural Payment Preferences"],
+          ["Freemium Conversion", "design_paywall_triggers_based_on", "Usage Value Milestones"],
+          ["Viral Growth Loop", "incentivize_invites_by_embedding_sharing_into", "Core User Workflows"],
+          ["Legacy Migration", "plan_end_of_life_for_old_platforms_with", "Phased Sunsetting Communication"],
+          ["Data Privacy Request", "comply_with_gdpr_deletion_requests_by_coordinating_across", "All Data Store Owners"]
+        ],
+        "mixed": [
+          ["Technical Feasibility", "validate_build_complexity_with", "Engineering Spike Assessments"],
+          ["Design Sprints", "rapidly_prototype_solutions_in", "Five-Day Collaborative Workshops"],
+          ["Success Metrics", "define_measurable_outcomes_using", "Specific OKRs and KPIs"],
+          ["Beta Programs", "gather_early_adopter_feedback_before", "General Availability Launches"],
+          ["Engineering Spikes", "authorize_time_boxed_investigations_to", "De-risk Unknown Technical Challenges"],
+          ["API First Design", "spec_out_endpoints_collaboratively_before", "UI Development Begins"],
+          ["Dogfooding Culture", "use_your_own_product_internally_to", "Catch Bugs Before Customers Do"],
+          ["Scalability Planning", "reserve_backend_capacity_in_advance_for", "Predicted Holiday Traffic Spikes"],
+          ["Bug Triage", "prioritize_critical_fixes_alongside_features_in", "Shared Sprint Backlog Sessions"],
+          ["Integration Testing", "validate_end_to_end_flows_across", "Multiple Third-Party Service Boundaries"]
+        ]
+      }
+    },
+    "Data_Scientist": {
+      "focus_areas": {
+        "technical": [
+          ["Pandas DataFrames", "manipulate_tabular_data_using", "Row and Column Operations"],
+          ["Null Values", "handle_missing_entries_via", "Imputation or Removal Strategies"],
+          ["Correlation Matrix", "measure_linear_relationships_among", "Multiple Numerical Features"],
+          ["Bar Charts", "visualize_categorical_distributions_using", "Matplotlib and Seaborn Libraries"],
+          ["Train-Test Split", "evaluate_model_performance_on", "Unseen Holdout Data"],
+          ["SQL Queries", "extract_data_from_databases_using", "SELECT-FROM-WHERE Clauses"],
+          ["Z-Score Normalization", "standardize_data_distributions_around", "Zero Mean and Unit Variance"],
+          ["P-Value", "assess_statistical_significance_against", "Predetermined Alpha Thresholds"],
+          ["Confusion Matrix", "breakdown_classifier_performance_into", "True-False Positive-Negative Counts"],
+          ["ROC Curve", "visualize_trade_off_between", "True Positive Rate and False Positive Rate"],
+          ["F1 Score", "compute_harmonic_mean_of", "Precision and Recall Metrics"],
+          ["Box Plots", "display_data_quartiles_and_outliers_using", "Interquartile Range Visualization"],
+          ["One-Hot Encoding", "convert_categorical_variables_into", "Binary Indicator Columns"],
+          ["Principal Component Analysis", "reduce_dimensionality_while_preserving", "Maximum Variance Directions"],
+          ["Time Series Decomposition", "split_signal_into", "Trend-Seasonality-Residual Components"],
+          ["A-B Testing", "compare_control_vs_treatment_groups_using", "Two-Sample T-Tests"],
+          ["Jupyter Notebooks", "interactively_explore_data_in", "Cell-Based Computational Documents"],
+          ["Random Forest", "aggregate_predictions_from", "An Ensemble of Decision Trees"],
+          ["K-Means Clustering", "group_unlabeled_data_into", "Predefined K Distinct Clusters"],
+          ["Numpy Arrays", "perform_vectorized_operations_on", "Multi-Dimensional Numerical Grids"]
+        ],
+        "behavioral": [
+          ["Data Storytelling", "present_insights_to_stakeholders_using", "Compelling Narrative Visualizations"],
+          ["Business Impact Translation", "convert_analytical_outputs_into", "Revenue-Centric Recommendations"],
+          ["Collaborative Analysis", "partner_with_domain_experts_to_validate", "Feature Engineering Assumptions"],
+          ["Ethical AI Considerations", "audit_models_for_bias_across", "Protected Demographic Segments"],
+          ["Iterative Exploration", "refine_hypotheses_based_on", "Initial Data Discovery Findings"],
+          ["Analytical Rigor", "document_all_transformation_assumptions_to", "Ensure Reproducible Research Standards"],
+          ["Stakeholder Expectation Setting", "communicate_uncertainty_intervals_to", "Avoid Over-Promising False Precision"],
+          ["Peer Code Review", "improve_analysis_quality_by", "Inviting Constructive Statistical Critique"],
+          ["Domain Immersion", "learn_business_kpis_by_embedding_within", "Operational Teams for Context"],
+          ["Simplicity Advocacy", "prefer_interpretable_models_over_black_boxes_when", "Explaining Decisions to Regulators"]
+        ],
+        "case": [
+          ["Churn Prediction", "forecast_customer_attrition_using", "Logistic Regression and RFM Features"],
+          ["Sales Forecasting", "estimate_future_revenue_by_modeling", "Time Series Seasonal Trends"],
+          ["Fraud Detection", "flag_suspicious_transactions_using", "Anomaly Detection Algorithms"],
+          ["Customer Segmentation", "group_users_by_behavior_using", "K-Means Clustering"],
+          ["Lifetime Value Calculation", "project_future_revenue_from", "Historical Cohort Purchase Patterns"],
+          ["Inventory Optimization", "reorder_stock_based_on", "Probabilistic Demand Forecasting Models"],
+          ["Marketing Attribution", "assign_conversion_credit_to_channels_using", "Shapley Value Decomposition"],
+          ["A-B Test Analysis", "validate_experiment_results_by_checking", "Statistical Power and Significance Levels"],
+          ["Search Ranking", "optimize_result_order_using", "Click-Through Rate Learning to Rank"],
+          ["Employee Attrition", "predict_staff_turnover_risk_with", "HR Demographic and Engagement Features"]
+        ],
+        "mixed": [
+          ["Jupyter Notebooks", "document_analysis_workflows_in", "Interactive Reproducible Environments"],
+          ["ETL Pipelines", "automate_data_extraction_and_cleaning_through", "Scheduled Workflow Scripts"],
+          ["Dashboard Design", "surface_kpi_trends_for_decision_makers_via", "Interactive BI Tools"],
+          ["Experiment Design", "structure_hypothesis_tests_using", "Control and Treatment Group Frameworks"],
+          ["Data Quality Checks", "validate_freshness_and_completeness_before", "Running Critical Business Reports"],
+          ["Feature Store", "serve_consistent_engineered_features_across", "Training and Inference Environments"],
+          ["Model Monitoring", "detect_data_drift_by_comparing", "Live Input Distributions Against Training Baselines"],
+          ["Ad-Hoc Requests", "translate_vague_business_questions_into", "Precise SQL Analytical Queries"],
+          ["Git Versioning", "track_changes_to_notebooks_and_scripts_in", "Collaborative Data Project Repositories"],
+          ["Pipeline Orchestration", "schedule_interdependent_tasks_using", "DAG-Based Workflow Managers like Airflow"]
+        ]
+      }
+    },
+    "Data_Analyst": {
+      "focus_areas": {
+        "technical": [
+          ["SELECT Statements", "retrieve_specific_columns_from", "Relational Database Tables"],
+          ["WHERE Clause", "filter_rows_based_on", "Conditional Logical Expressions"],
+          ["GROUP BY", "aggregate_data_into_summary_statistics_per", "Categorical Dimension Values"],
+          ["INNER JOIN", "combine_matching_records_across", "Two Related Tables"],
+          ["Pivot Tables", "reshape_and_summarize_data_in", "Cross-Tabulated Row and Column Layouts"],
+          ["VLOOKUP", "pull_matching_values_into_spreadsheets_from", "Lookup Table References"],
+          ["Data Cleaning", "remove_duplicates_and_standardize_formats_in", "Raw Unstructured Datasets"],
+          ["Bar Charts", "compare_categorical_values_visually_using", "Horizontal or Vertical Rectangular Bars"],
+          ["Line Charts", "plot_temporal_trends_by_connecting", "Sequential Time-Series Data Points"],
+          ["Pie Charts", "display_part_to_whole_proportions_using", "Circular Sector Angle Sizes"],
+          ["Descriptive Statistics", "summarize_data_distributions_via", "Mean-Median-Mode-Standard Deviation Metrics"],
+          ["Excel Formulas", "compute_calculated_columns_using", "Built-in Arithmetic and String Functions"],
+          ["CTEs", "break_complex_queries_into", "Reusable Named Temporary Result Sets"],
+          ["Window Functions", "compute_running_totals_and_ranks_over", "Partitioned Row Subsets"],
+          ["Data Validation", "restrict_cell_input_values_using", "Dropdown Lists and Range Checks"],
+          ["Conditional Formatting", "highlight_cells_based_on", "Custom Threshold Rules"],
+          ["Power Query", "transform_and_load_data_from_multiple_sources_via", "M Language ETL Steps"],
+          ["DAX Measures", "define_custom_calculations_in_Power_BI_using", "Data Analysis Expressions"],
+          ["Tableau Filters", "limit_dashboard_view_to", "Dimension-Member or Measure-Range Selections"],
+          ["Slicers", "enable_interactive_user_filtering_on", "Report Canvas Visual Elements"]
+        ],
+        "behavioral": [
+          ["Stakeholder Interviews", "clarify_report_requirements_by_asking", "Open-Ended Business Question Probes"],
+          ["Data Storytelling", "guide_audiences_through_insights_using", "Narrative Arc and Annotated Visuals"],
+          ["Expectation Management", "set_realistic_timelines_when", "Ad-Hoc Data Requests Arrive"],
+          ["Cross-Departmental Sync", "align_metric_definitions_across", "Marketing-Sales-Finance Teams"],
+          ["Attention to Detail", "spot_outliers_and_anomalies_by", "Meticulously Scanning Raw Data Tables"],
+          ["Pushback on Bad Data", "reject_inaccurate_requests_by_explaining", "Underlying Source System Limitations"],
+          ["Presentation Confidence", "defend_findings_to_senior_leaders_using", "Evidence-Backed Assertions"],
+          ["Peer Training", "upskill_colleagues_on_self_service_analytics_through", "Lunch-and-Learn Workshops"],
+          ["Curiosity Mindset", "investigate_unusual_spikes_by_drilling_into", "Granular Transactional Records"],
+          ["Feedback Incorporation", "iterate_on_dashboard_designs_based_on", "User Usability Testing Sessions"]
+        ],
+        "case": [
+          ["Revenue Drop Analysis", "diagnose_declining_sales_by_segmenting", "Region-Product-Channel Performance"],
+          ["Marketing Campaign ROI", "calculate_acquisition_costs_and_ltv_by", "Attributing Conversions to Source Channels"],
+          ["Customer Churn Dashboard", "track_monthly_retention_cohorts_using", "Subscription Status Time Series"],
+          ["Inventory Stockout Alert", "forecast_demand_surges_based_on", "Historical Seasonality and Lead Times"],
+          ["Website Funnel Optimization", "identify_drop_off_pages_using", "Sessions-to-Checkout Conversion Rates"],
+          ["Pricing Sensitivity Test", "analyze_elasticity_by_correlating", "Discount Depth with Units Sold"],
+          ["Support Ticket Triage", "categorize_issues_by_frequency_and_sentiment_using", "Text Pattern Keyword Extraction"],
+          ["Employee Attrition Dashboard", "visualize_turnover_by_department_using", "HRIS Exit Survey Data"],
+          ["A-B Test Result Reporting", "compare_conversion_lifts_between", "Control and Experiment Variant Groups"],
+          ["Sales Territory Redesign", "optimize_rep_assignments_by_clustering", "Zip Code Purchase Density Maps"]
+        ],
+        "mixed": [
+          ["Dashboard Design Principles", "place_key_metrics_above_the_fold_on", "Executive Summary Viewports"],
+          ["SQL Optimization", "rewrite_queries_to_reduce_runtime_by", "Adding Appropriate Indexes"],
+          ["Data Governance", "tag_sensitive_pii_columns_in", "Data Catalog Discovery Tools"],
+          ["Automated Reporting", "schedule_refresh_and_email_delivery_of", "Cached Dashboard Snapshots"],
+          ["KPI Definition", "codify_business_logic_for_metrics_in", "Centralized Semantic Layer Tool"],
+          ["Version Control for Reports", "track_changes_to_dashboard_json_files_in", "Git Repository Branches"],
+          ["Data Literacy Advocacy", "educate_teams_on_difference_between", "Correlation and Causation"],
+          ["Tool Selection", "choose_between_excel_and_bi_tools_based_on", "Data Volume and Refresh Cadence Needs"],
+          ["Agile Analytics", "deliver_insights_incrementally_through", "Two-Week Sprint Cycles"],
+          ["Executive Summaries", "synthesize_complex_findings_into", "One-Page Bulleted Action Recommendations"]
+        ]
+      }
+    }
+  }
+}

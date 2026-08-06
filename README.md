@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # AI Mock Interview Coach
 
 A command-line based AI mock interview application designed to simulate technical interviews, evaluate candidate responses in real-time, and provide comprehensive coaching feedback.
@@ -282,6 +282,4 @@ stateDiagram-v2
 - **Scalability**: Your API rate limiter design using a standard database table would not scale. Review distributed system concepts, specifically using in-memory stores like Redis and standard rate-limiting algorithms (Token Bucket, Leaky Bucket).
 - **Concurrency Fundamentals**: Ensure you have a solid grasp of basic database isolation levels and locking mechanisms.
 ```
-=======
-# AI_prototype_engineer
->>>>>>> 1f1b7f5c08ed47804b312af5e6ffb1cbc13223f0
+

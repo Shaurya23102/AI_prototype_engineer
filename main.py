@@ -51,7 +51,7 @@ console = Console(theme=CUSTOM_THEME)
 
 # ── Constants ─────────────────────────────────────────────────────────
 
-FOCUS_AREAS = ["technical", "behavioral", "mixed"]
+FOCUS_AREAS = ["technical", "behavioral", "case", "mixed"]
 
 
 # ── Display Helpers ───────────────────────────────────────────────────
@@ -126,8 +126,8 @@ def intake() -> dict:
 
     # Target role
     console.print("  [info]What role are you preparing for?[/]")
-    console.print("  [dim]Examples: ML Engineer, Product Manager, Backend Developer, "
-                  "Data Scientist, Software Engineer[/]")
+    console.print("  [dim]Examples: AI/ML Engineer, Product Manager, Backend Developer, "
+                  "Data Scientist, Data Analyst, Software Engineer[/]")
     target_role = Prompt.ask("  [bold]Target Role[/]")
 
     console.print()
@@ -145,11 +145,11 @@ def intake() -> dict:
         console.print(f"    {i}. {area.capitalize()}")
     choice = Prompt.ask(
         "  [bold]Focus Area[/]",
-        choices=["1", "2", "3", "technical", "behavioral", "mixed"],
+        choices=["1", "2", "3", "4", "technical", "behavioral", "case", "mixed"],
         default="1",
     )
     # Map numeric choices to names
-    focus_map = {"1": "technical", "2": "behavioral", "3": "mixed"}
+    focus_map = {"1": "technical", "2": "behavioral", "3": "case", "4": "mixed"}
     focus_area = focus_map.get(choice, choice)
 
     return {
@@ -289,14 +289,14 @@ def run_interview():
         ))
 
         # Save report to file
-        report_path = Path(__file__).parent / "last_interview_report.md"
+        report_path = Path(__file__).parent / "last_interview_report2.md"
         report_path.write_text(report, encoding="utf-8")
         console.print(
             f"\n  [success]✓ Report saved to:[/] {report_path}"
         )
 
         # Save full transcript
-        transcript_path = Path(__file__).parent / "last_interview_transcript.md"
+        transcript_path = Path(__file__).parent / "last_interview_transcript2.md"
         transcript_lines = [f"# Interview Transcript — {state.target_role_display}\n"]
         transcript_lines.append(f"Focus: {state.focus_area} | Turns: {state.current_turn}\n")
         turn_num = 0

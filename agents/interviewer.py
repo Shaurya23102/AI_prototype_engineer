@@ -2,13 +2,14 @@
 Interviewer Agent — Persona & Dialogue Engine
 
 Generates interview questions driven by the evaluator's direction
-and the remaining concept list. Streams plain text, stays in character.
+and the current concept (randomly selected from remaining pool).
+Streams plain text, stays in character. Never gets stuck on one topic.
 """
 
 from pathlib import Path
 from groq import Groq
 
-from knowledge.loader import format_concept_list
+from knowledge.loader import format_concept_list, format_concept
 
 
 # ── Prompt Template ───────────────────────────────────────────────────
@@ -28,18 +29,55 @@ def _build_system_prompt(state) -> str:
     """
     Build the full system prompt by injecting dynamic state into the template.
 
-    Uses only remaining_concepts to prevent token bloat and repetition.
+    Injects the current_concept (randomly selected by orchestrator) and
+    only remaining_concepts to prevent token bloat and repetition.
     """
     template = _load_prompt_template()
 
-    # Determine evaluator direction based on turn number
+    # Determine evaluator direction based on turn number and last rating
     if state.current_turn == 0:
-        direction = "This is the FIRST turn. Introduce yourself briefly (one sentence) and ask an opening question about the first remaining concept."
+        direction = (
+            "This is the FIRST turn. Introduce yourself briefly (one sentence) "
+            "and ask an opening question about the current concept."
+        )
     elif state.evaluations:
         last_eval = state.evaluations[-1]
-        direction = last_eval.get("interviewer_direction", "Move to the next concept.")
+        last_rating = last_eval.get("overall_rating", "partial")
+
+        if last_rating == "strong":
+            direction = (
+                f"The candidate gave a STRONG answer. "
+                f"Move to a NEW topic. Ask about the current concept shown above. "
+                f"Use a natural conversational transition."
+            )
+        elif last_rating == "weak":
+            # Check if we've been on the same topic for 2+ turns already
+            if _consecutive_followups(state) >= 1:
+                direction = (
+                    f"The candidate was weak but you already followed up once. "
+                    f"Move on to the current concept shown above. Don't get stuck. "
+                    f"Use a smooth transition."
+                )
+            else:
+                eval_direction = last_eval.get("interviewer_direction", "")
+                direction = (
+                    f"The candidate was WEAK. Follow up on the same topic to give "
+                    f"them another chance. {eval_direction}"
+                )
+        else:  # partial
+            if _consecutive_followups(state) >= 1:
+                direction = (
+                    f"The candidate gave a partial answer but you already followed up. "
+                    f"Move to the current concept shown above. Keep the interview diverse."
+                )
+            else:
+                eval_direction = last_eval.get("interviewer_direction", "")
+                direction = (
+                    f"The candidate gave a PARTIAL answer. Probe deeper on the "
+                    f"specific gap. {eval_direction}"
+                )
     else:
-        direction = "Continue the interview. Pick the next concept from the remaining list."
+        direction = "Continue the interview. Ask about the current concept."
 
     # Determine difficulty level
     if state.evaluations:
@@ -57,16 +95,40 @@ def _build_system_prompt(state) -> str:
     else:
         difficulty = "Medium — opening question. Gauge the candidate's level."
 
+    # Format current concept
+    current_concept_str = "(none)"
+    if state.current_concept:
+        current_concept_str = format_concept(state.current_concept)
+
     return template.format(
         persona=state.persona,
         role_display=state.target_role_display,
         focus_area=state.focus_area,
         background=state.background or "No background provided.",
         difficulty=difficulty,
+        current_concept=current_concept_str,
         covered_concepts=format_concept_list(state.covered_concepts),
         remaining_concepts=format_concept_list(state.remaining_concepts),
         evaluator_direction=direction,
     )
+
+
+def _consecutive_followups(state) -> int:
+    """
+    Count how many consecutive turns we've been on the same concept.
+    Prevents the interviewer from getting stuck on one topic.
+    """
+    if len(state.evaluations) < 2:
+        return 0
+
+    count = 0
+    for eval_data in reversed(state.evaluations[:-1]):  # Exclude current
+        rating = eval_data.get("overall_rating", "partial")
+        if rating in ("weak", "partial"):
+            count += 1
+        else:
+            break
+    return count
 
 
 def _build_messages(state) -> list[dict]:
