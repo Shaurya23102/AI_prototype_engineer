@@ -1,40 +1,242 @@
 
 # AI Mock Interview Coach
 
-A command-line based AI mock interview application designed to simulate technical interviews, evaluate candidate responses in real-time, and provide comprehensive coaching feedback.
+A multi-agent CLI system that conducts realistic mock interviews, evaluates candidate responses in real-time with structured scoring, and delivers personalized coaching feedback — powered by Groq (LLaMA 3.3 70B).
+
+---
 
 ## Architecture Overview
 
-The application utilizes a deterministic state machine orchestrated by a central component, coordinating three specialized AI agents.
+### Why Three Agents — and Why They're Genuinely Different
 
-### Agents
-1. **Interviewer Agent**: Generates contextually relevant, plain text interview questions based on the selected role, difficulty, and the candidate's previous responses. It progressively explores required concepts.
-2. **Evaluator Agent**: Analyzes the candidate's response against the targeted concepts and current question. It operates in strict JSON mode to provide structured scoring (0-10) and actionable critique.
-3. **Coach Agent**: Activates at the end of the interview to synthesize all turns, evaluator scores, and covered concepts into a comprehensive Markdown report, highlighting strengths and areas for improvement.
+This system is **not** three sequential LLM calls dressed up as "agents." Each agent has a fundamentally different **role**, **persona**, **output contract**, **decision authority**, and **behavioral constraints**. They are designed to be adversarial-cooperative: the Evaluator silently judges without the candidate knowing, the Interviewer follows orders without seeing scores, and the Coach synthesizes what neither could alone.
 
-### Orchestration
-The `Orchestrator` manages the `InterviewState` dataclass, routing control flow between the Interviewer, the User (candidate), and the Evaluator, until the turn limit (max 7) is reached or all required concepts are covered.
+| Dimension | Interviewer Agent | Evaluator Agent | Coach Agent |
+|---|---|---|---|
+| **Role** | Conversational partner — asks questions, listens | Silent judge — scores and routes | Post-game analyst — synthesizes and advises |
+| **When it runs** | Every turn (before candidate speaks) | Every turn (after candidate speaks) | Once (after interview ends) |
+| **Output format** | Free-form plain text (natural speech) | Strict JSON object (machine-parseable) | Structured Markdown report |
+| **Persona** | Role-specific (e.g., "Senior Engineering Manager", "VP Product") — stays in character | No persona — objective analytical engine | Supportive career coach |
+| **Sees candidate?** | Yes — directly addresses them | No — never speaks to candidate | Yes — addresses them in final report |
+| **Gives feedback?** | **Never** — strictly prohibited from hinting or evaluating | Only to the Interviewer (via `interviewer_direction`) | Only to the candidate (final report) |
+| **Temperature** | 0.75 (creative, natural conversation) | 0.3 (deterministic, consistent scoring) | 0.6 (balanced synthesis) |
+| **Decision authority** | Chooses *how* to phrase a question | Decides *what happens next* (follow-up vs. move on) | Decides the *final verdict* (Strong Hire / Tricky Select / Not Good Hire) |
+| **Context window** | Full conversation history + remaining concepts | Single turn only (question + answer + concept list) | Entire transcript + all evaluation scores |
+| **Token budget** | 512 max (concise questions) | 512 max (compact JSON) | 3000 max (detailed report) |
 
-```mermaid
-stateDiagram-v2
-    [*] --> Setup
-    Setup --> Interviewer: Initialize State
-    
-    state InterviewLoop {
-        Interviewer --> User: Ask Question
-        User --> Evaluator: Provide Answer
-        Evaluator --> Interviewer: Update State & Scores
-    }
-    
-    Evaluator --> Coach: Turn Limit Reached OR Concepts Exhausted
-    Coach --> [*]: Generate Final Report
+### The Key Insight: Separation of Concerns
+
+The **Interviewer never sees the scores**. It only receives a plain-English `interviewer_direction` string from the Evaluator (e.g., *"Candidate was vague about tiling — probe deeper on memory hierarchy"*). This prevents the Interviewer from breaking character by saying things like *"Your score was 3/10, let's try again."*
+
+The **Evaluator never speaks to the candidate**. It operates as a silent, stateless scoring engine — it receives one (question, answer) pair, scores it on 4 dimensions, and outputs routing instructions. It has no memory of previous turns.
+
+The **Coach only activates once** at the end. It receives the *entire* transcript and *all* evaluator scores — information that neither the Interviewer nor the Evaluator ever had access to in full. This allows it to spot patterns across turns (e.g., *"You consistently scored low on Specificity"*) that no single-turn agent could detect.
+
+---
+
+### Orchestration: The State Machine
+
+The orchestrator (`orchestrator.py`) is **pure Python logic with zero LLM calls**. It manages a central `InterviewState` dataclass and implements deterministic routing — the LLM agents never decide control flow.
+
 ```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        INTERVIEW LOOP                               │
+│                                                                     │
+│   Interviewer ──Ask Question──► User ──Answer──► Evaluator          │
+│                                                       │             │
+│                                             Update State & Scores   │
+│                                                       │             │
+│                                           ┌───────────┼──────────┐  │
+│                                           │    Conditional Router │  │
+│                                           │    (Python, not LLM)  │  │
+│                                           └───┬───────┬──────┬───┘  │
+│                                               │       │      │      │
+│                                          weak/vague  strong  turn≥7 │
+│                                          Follow-up   Next    or     │
+│                                               │      Topic  concepts│
+│                                               │       │    exhausted│
+│                                               ▼       ▼      │      │
+│                                           Interviewer ◄───────┘      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+                                                       │
+                                                       ▼
+                                                    Coach
+                                              (Final Report)
+```
+
+#### Routing Rules (Deterministic — No LLM Involved)
+
+| Condition | Action | Why |
+|---|---|---|
+| `overall_rating == "strong"` | Move concept → covered, pick **random** next topic | Candidate demonstrated mastery — no need to linger |
+| `overall_rating == "weak"` or `"partial"` | Stay on **same concept**, Interviewer follows up | Give candidate another chance to demonstrate understanding |
+| Consecutive follow-ups ≥ 2 on same topic | **Force move** to next topic anyway | Prevents the interview from getting stuck on one concept |
+| `current_turn >= 7` | Exit loop → Coach | Hard turn limit reached |
+| `remaining_concepts == []` | Exit loop → Coach | All concepts covered |
+
+#### What the Orchestrator Tracks (InterviewState)
+
+```python
+@dataclass
+class InterviewState:
+    target_role_canonical: str        # "AI_ML_Engineer"
+    remaining_concepts: list[dict]    # Concepts not yet covered (shrinks each turn)
+    covered_concepts: list[dict]      # Successfully covered (grows each turn)
+    current_concept: dict             # Active concept being probed this turn
+    transcript: list[dict]            # Full conversation history
+    evaluations: list[dict]          # All evaluator JSON outputs
+    current_turn: int                # 0-indexed turn counter
+    max_turns: int = 7               # Hard stop
+```
+
+---
+
+### Agent Deep Dives
+
+#### Agent 1: The Interviewer (Persona & Dialogue Engine)
+
+**File:** `agents/interviewer.py` | **Prompt:** `prompts/interviewer_prompt.txt`
+
+The Interviewer is a **conversational actor**. It maintains a consistent persona (e.g., *"a Principal ML Scientist at a leading AI research lab"*) and its core behavioral constraint is that it **must never evaluate, hint, or give feedback**. It receives its marching orders from the Evaluator's `interviewer_direction` field but never sees the numerical scores.
+
+**What makes it genuinely different:**
+- Maintains **full conversation history** in its context window for natural dialogue flow
+- **Adapts difficulty dynamically** based on a rolling average of recent scores (without seeing the scores directly — difficulty is pre-computed by the orchestrator)
+- Has a **consecutive follow-up limiter** — after 1 follow-up on the same weak topic, it's forced to move on, ensuring diverse coverage
+- Randomly selects concepts from the remaining pool (not sequential), simulating a real interviewer who jumps between topics
+
+**Behavioral constraints (from prompt):**
+> - Stay in character at ALL times. Never say "as an AI".
+> - NEVER give feedback, hints, or evaluate the candidate's answer.
+> - Ask exactly ONE question per turn.
+> - Do NOT get stuck on the same topic for more than 2 consecutive turns.
+> - Pick questions RANDOMLY from remaining concepts.
+
+---
+
+#### Agent 2: The Evaluator (Structured JSON Scoring Engine)
+
+**File:** `agents/evaluator.py` | **Prompt:** `prompts/evaluator_prompt.txt`
+
+The Evaluator is a **stateless analytical engine**. It receives exactly one (question, answer) pair per turn and outputs a strict JSON object. It has **no persona**, **no conversation history**, and **never speaks to the candidate**. Its output directly controls the Interviewer's next action via the `interviewer_direction` field.
+
+**What makes it genuinely different:**
+- Operates in **JSON mode** (`response_format: json_object`) — completely different output contract from the other agents
+- Is the **only agent with decision authority** over what happens next (follow-up vs. new topic)
+- Has a **detailed scoring rubric** with anchor descriptions for each score (1-10) across 4 dimensions
+- Includes **edge case detection logic** in its prompt — explicit instructions for handling "I don't know", off-topic tangents, and partial answers
+- Has a **5-layer fallback parser** in code to handle malformed JSON (strip code fences → extract embedded JSON → clamp out-of-range scores → validate rating → complete fallback)
+
+**Output contract (strictly enforced):**
+```json
+{
+  "scores": {
+    "relevance": 8,
+    "specificity": 7,
+    "structure": 8,
+    "confidence": 7
+  },
+  "overall_rating": "strong",
+  "concepts_covered": ["Flash Attention"],
+  "interviewer_direction": "Strong response. Move to the next concept.",
+  "key_observations": "Candidate demonstrated deep understanding of memory hierarchy."
+}
+```
+
+**Scoring dimensions:**
+| Dimension | What it measures |
+|---|---|
+| **Relevance** (1-10) | Does the answer address the actual question asked? |
+| **Specificity** (1-10) | Are there concrete details, examples, and technical depth? |
+| **Structure** (1-10) | Is the answer well-organized with logical flow? |
+| **Confidence** (1-10) | Does the candidate sound assured and authoritative? |
+
+---
+
+#### Agent 3: The Coach (Post-Interview Synthesis Engine)
+
+**File:** `agents/coach.py` | **Prompt:** `prompts/coach_prompt.txt`
+
+The Coach is a **synthesis engine** that only runs once, after the interview ends. It receives the **complete transcript** and **all evaluator scores** — information that neither the Interviewer nor the Evaluator ever had access to holistically. This allows it to identify cross-turn patterns and deliver a comprehensive report.
+
+**What makes it genuinely different:**
+- Has **the largest context window** (entire transcript + all scores) — neither other agent sees this
+- Is the **only agent that speaks directly to the candidate** with evaluative feedback
+- Outputs **structured Markdown** (not JSON, not plain text) — a third distinct output format
+- **Cites specific transcript moments** with turn numbers and quotes — grounded in evidence
+- Is the **only agent that assigns the final verdict**: Strong Hire / Tricky Select / Not Good Hire
+
+**Final classification labels:**
+| Verdict | Criteria | Avg Score |
+|---|---|---|
+| **Strong Hire** | Consistently strong answers, deep expertise, excellent communication | 7+ |
+| **Tricky Select** | Borderline — some solid answers but noticeable gaps, could go either way | 4–6 |
+| **Not Good Hire** | Fundamental gaps in knowledge or communication, struggled with most questions | Below 4 |
+
+---
+
+### Knowledge Pipeline
+
+#### Role Resolution (Zero-Embedding)
+
+Instead of using vector embeddings to match free-text role inputs, we use a lightweight **alias dictionary** with substring fallback:
+
+```python
+ROLE_ALIASES = {
+    "ml engineer": "AI_ML_Engineer",
+    "machine learning": "AI_ML_Engineer",
+    "backend dev": "Backend_Engineer",
+    "data analyst": "Data_Analyst",
+    "pm": "Product_Manager",
+    ...
+}
+```
+
+If no alias matches → falls back to `General_Interview_Mode` with universal engineering concepts.
+
+#### Concept Triplets (from `roles1.json`)
+
+Each role has concepts organized by focus area (**technical**, **behavioral**, **case**, **mixed**):
+
+```json
+["Flash Attention", "accelerate_self-attention_computation_by", "Tiled Matrix Multiplication"]
+```
+
+Concepts are **randomly shuffled** at startup so every interview session feels different. The orchestrator tracks which concepts are covered vs. remaining to prevent repetition and ensure breadth.
+
+---
+
+## Project Structure
+
+```
+interview_coach/
+├── main.py                    # CLI entry point + Rich-formatted UI
+├── orchestrator.py            # State machine (pure Python, no LLM calls)
+├── agents/
+│   ├── interviewer.py         # Persona-consistent question generation
+│   ├── evaluator.py           # JSON scoring engine with fallback parsing
+│   └── coach.py               # Markdown report synthesis
+├── knowledge/
+│   ├── role_resolver.py       # Alias dictionary + fallback logic
+│   └── loader.py              # In-memory triplet storage from roles1.json
+├── prompts/
+│   ├── interviewer_prompt.txt # Persona rules, difficulty calibration
+│   ├── evaluator_prompt.txt   # Scoring rubric, edge case handling, JSON format
+│   └── coach_prompt.txt       # Report structure, citation rules
+├── roles1.json                # 6 roles × 4 focus areas × 10-24 concepts each
+├── .env                       # GROQ_API_KEY, model config
+├── requirements.txt           # groq, rich, pydantic, python-dotenv
+└── Dockerfile                 # One-command containerized execution
+```
+
+---
 
 ## Setup & Run Instructions
 
 ### Prerequisites
 - Python 3.10+
-- A Groq API Key
+- A Groq API Key ([console.groq.com](https://console.groq.com))
 
 ### Local Setup
 1. **Clone the repository:**
@@ -43,10 +245,9 @@ stateDiagram-v2
    cd interview_coach
    ```
 2. **Create a `.env` file:**
-   Create a `.env` file in the root directory and add your configuration:
    ```env
    GROQ_API_KEY=your_api_key_here
-   GROQ_MODEL=llama3-70b-8192
+   GROQ_MODEL=llama-3.3-70b-versatile
    MAX_TURNS=7
    ```
 3. **Install dependencies:**
@@ -68,218 +269,236 @@ stateDiagram-v2
    docker run -it --env-file .env interview-coach
    ```
 
+---
+
 ## Key Design Decisions & Trade-offs
 
-- **Zero-embedding role resolution**: We opted for a simple alias dictionary (`ROLE_ALIASES`) falling back to a general mode rather than using a complex vector search for role mapping. This drastically reduces cold start times and eliminates the need for an external vector database.
-- **In-memory triplet storage**: Interview concepts are loaded from `roles.json` into in-memory triplets for O(1) retrieval, ensuring the orchestrator can instantly check remaining concepts without I/O overhead during the interview loop.
-- **Context budgeting**: To keep LLM inference fast and prevent context window bloat, the state machine only injects `remaining_concepts` rather than the full concept list, ensuring the interviewer stays focused.
-- **Strict JSON mode vs Free-text**: The Evaluator uses strict JSON output for robust, parsable scoring, while the Interviewer and Coach use free-text (or Markdown) to provide a natural conversational feel and readable reports.
-- **Deterministic state machine vs LLM-driven orchestration**: Control flow is managed by deterministic Python logic rather than relying on an LLM to decide when to stop. This ensures predictable behavior and prevents the AI from getting stuck in infinite loops.
-- **7-turn limit with early exit**: The interview is strictly capped at 7 turns to simulate a concise technical screen, but it can exit early if all required concepts for the role are successfully exhausted, saving time and API costs.
+| Decision | What we chose | Alternative considered | Why |
+|---|---|---|---|
+| **Role resolution** | Alias dictionary + substring match | Vector embeddings (sentence-transformers) | Zero cold-start, no embedding model needed, O(1) lookup |
+| **Concept storage** | In-memory dict from `roles1.json` | External vector DB (Pinecone/Chroma) | No infra dependency, sub-ms retrieval, sufficient for ~200 concepts |
+| **Orchestration** | Deterministic Python state machine | LLM-driven flow control | Predictable, no infinite loops, testable routing logic |
+| **Evaluator output** | Strict JSON mode | Free-text with regex parsing | Reliable structured data, enables deterministic routing |
+| **Context budgeting** | Inject only `remaining_concepts` | Full concept list every turn | Prevents token bloat, stops repetitive questions, reduces latency |
+| **Follow-up limit** | Max 1 follow-up per concept | Unlimited follow-ups on weak topics | Ensures breadth of coverage across the 7-turn budget |
+| **Concept selection** | Random shuffle at startup | Sequential from JSON order | Each session feels different; simulates real interview unpredictability |
+| **Turn limit** | Hard cap at 7 | LLM decides when to stop | Predictable session length, prevents runaway API costs |
+
+---
 
 ## Example Interview Transcripts
 
 ### Transcript 1: Strong Candidate (ML Engineer, Technical)
 
-**Intake Inputs:**
-- **Role**: ML Engineer
-- **Difficulty**: Hard
+**Intake:**
+- **Role:** ML Engineer → resolved to `AI_ML_Engineer` ✓
+- **Focus:** Technical
+- **Background:** "2 years building LLM-powered applications, familiar with transformers and fine-tuning"
 
 **Turn 1**
-- **Interviewer**: Welcome! Let's start by discussing attention mechanisms. Can you explain how Flash Attention optimizes the standard scaled dot-product attention, particularly regarding memory access patterns?
-- **Candidate**: Standard attention requires materializing the O(N^2) attention matrix to HBM, which is a massive memory bottleneck for long sequences. Flash Attention uses tiling to compute exact attention in SRAM without writing the intermediate NxN matrix to HBM. It fuses the computation, significantly reducing memory reads/writes and speeding up inference and training.
-- **Evaluator (JSON)**:
+- **Interviewer:** Welcome! I'm the hiring manager for our Applied ML team. Let's jump right in — can you walk me through how Flash Attention optimizes standard scaled dot-product attention, particularly regarding memory access patterns?
+- **Candidate:** Standard attention materializes the full O(N²) attention matrix to HBM, which is the major bottleneck for long sequences. Flash Attention uses tiling to compute exact attention in SRAM by breaking Q, K, V into blocks, computing partial softmax in each tile, then combining results — never writing the NxN intermediate matrix to HBM. This reduces memory IO from O(N²) to O(N), making it both faster and more memory-efficient.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 9,
-    "critique": "Excellent explanation. Accurately identified the O(N^2) memory bottleneck and correctly explained how tiling and kernel fusion in SRAM avoid HBM reads/writes.",
-    "concepts_covered": ["Flash Attention", "Memory IO", "Tiling"]
+    "scores": { "relevance": 9, "specificity": 9, "structure": 8, "confidence": 9 },
+    "overall_rating": "strong",
+    "concepts_covered": ["Flash Attention"],
+    "interviewer_direction": "Strong response on Flash Attention. Move to the next concept.",
+    "key_observations": "Excellent — correctly identified O(N²) HBM bottleneck, tiling in SRAM, and memory IO reduction."
   }
   ```
+  *Routing: strong → move to next random concept*
 
 **Turn 2**
-- **Interviewer**: Great explanation. Now, when fine-tuning large models, we often use Parameter-Efficient Fine-Tuning (PEFT) methods. Can you break down how LoRA works and why it's effective?
-- **Candidate**: LoRA freezes the pre-trained model weights and injects trainable rank decomposition matrices into each layer of the Transformer architecture. Instead of updating the full weight matrix W, it updates W + BA, where B and A are low-rank matrices. This reduces the number of trainable parameters by orders of magnitude while maintaining comparable performance to full fine-tuning, making it highly memory-efficient.
-- **Evaluator (JSON)**:
+- **Interviewer:** Great. Now, when adapting large pre-trained models for specific tasks, LoRA has become very popular. Can you break down how it works and what makes it memory-efficient?
+- **Candidate:** LoRA freezes all pre-trained weights and injects small trainable rank-decomposition matrices into transformer layers. Instead of updating the full weight matrix W (d×d), you update W + BA where B is d×r and A is r×d, with r being much smaller than d — typically 4-16. This reduces trainable parameters by 10,000x while maintaining comparable performance. It's memory-efficient because gradients only flow through the small BA matrices.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 9,
-    "critique": "Spot on. Correctly defined the rank decomposition (W + BA) and the primary benefit of drastically reducing trainable parameters and memory footprint while freezing base weights.",
-    "concepts_covered": ["LoRA", "PEFT", "Low-rank approximation"]
+    "scores": { "relevance": 9, "specificity": 9, "structure": 9, "confidence": 8 },
+    "overall_rating": "strong",
+    "concepts_covered": ["Low-Rank Adaptation"],
+    "interviewer_direction": "Strong response. Move to the next concept.",
+    "key_observations": "Textbook explanation with exact matrix dimensions and typical rank values."
   }
   ```
+  *Routing: strong → move to next random concept*
 
 **Turn 3**
-- **Interviewer**: Moving on to generative systems. How would you design a Retrieval-Augmented Generation (RAG) pipeline, and what are the key challenges in ensuring the retrieved context is relevant?
-- **Candidate**: I'd start with a vector database holding chunked and embedded documents using a dense retrieval model like sentence-transformers. When a query comes in, we embed it, retrieve top-K chunks via cosine similarity, and prepend them to the LLM prompt. Challenges include chunking strategy (semantic vs fixed), handling conflicting information in the retrieved chunks, and the 'lost in the middle' phenomenon where LLMs ignore context in the middle of long prompts. Re-ranking algorithms like Cohere's can help surface the most relevant chunks to the top.
-- **Evaluator (JSON)**:
+- **Interviewer:** Shifting gears — how would you design a RAG pipeline, and what are the key failure modes?
+- **Candidate:** I'd chunk documents semantically, embed them with a model like BGE or E5, store in a vector DB. At query time, embed the query, retrieve top-K via approximate nearest neighbors, then re-rank with a cross-encoder before injecting into the LLM prompt. Key failure modes: poor chunking loses context boundaries, embedding model domain mismatch, "lost in the middle" where LLMs ignore central retrieved passages, and stale indexes when source data updates.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 8,
-    "critique": "Very comprehensive. Covered the standard dense retrieval flow and correctly identified advanced challenges like chunking strategies, 'lost in the middle', and the need for re-ranking.",
-    "concepts_covered": ["RAG", "Vector Databases", "Embeddings", "Re-ranking"]
+    "scores": { "relevance": 9, "specificity": 8, "structure": 9, "confidence": 8 },
+    "overall_rating": "strong",
+    "concepts_covered": ["RAG Pipeline"],
+    "interviewer_direction": "Comprehensive answer. Move to next concept.",
+    "key_observations": "Strong end-to-end design with practical failure mode analysis."
   }
   ```
 
-**Turn 4**
-- **Interviewer**: Excellent. Finally, how do you handle deploying these large models to production efficiently?
-- **Candidate**: I'd look into quantization, like INT8 or AWQ, to reduce the model size. Serving frameworks like vLLM with PagedAttention are crucial for handling concurrent requests efficiently by managing KV cache memory. We also need to set up robust monitoring for data drift and latency.
-- **Evaluator (JSON)**:
-  ```json
-  {
-    "score": 8,
-    "critique": "Strong answer. Correctly mentioned modern techniques like vLLM, PagedAttention, and quantization for efficient serving.",
-    "concepts_covered": ["Model Serving", "Quantization", "vLLM", "PagedAttention"]
-  }
-  ```
+*(Interview continues through 7 turns with consistently high scores)*
 
-*(Interview exits early as core concepts are exhausted)*
-
-**Coach Report Summary:**
-```markdown
-# Interview Feedback Report: ML Engineer
-
-## Overall Performance
-**Exceptional.** You demonstrated a deep understanding of modern ML engineering concepts, particularly around LLM optimization and architecture.
-
-## Strengths
-- **Deep Technical Knowledge**: Your explanations of Flash Attention and LoRA were textbook-perfect, highlighting exact mechanical benefits (SRAM tiling, rank decomposition).
-- **System Design**: You showed a mature understanding of RAG pipelines, moving beyond basic retrieval to discuss chunking strategies and re-ranking.
-- **Production Readiness**: Familiarity with vLLM and quantization shows strong practical deployment skills.
-
-## Areas for Improvement
-- Your answers were very strong, but you could optionally provide brief examples of specific use-cases where you've applied these techniques to ground your theoretical knowledge in practical experience.
-```
+**Coach Report (Final Verdict: Strong Hire):**
+> **Overall:** Exceptional performance. You demonstrated deep, practical knowledge of modern ML engineering across attention mechanisms, parameter-efficient fine-tuning, and production RAG pipelines.
+>
+> **Strengths:** In Turn 1, your Flash Attention explanation was precise — "tiling to compute exact attention in SRAM, reducing memory IO from O(N²) to O(N)." In Turn 2, you gave exact rank dimensions (r=4-16) for LoRA, showing hands-on experience.
+>
+> **Verdict: Strong Hire** — consistently scored 8-9 across all dimensions with expert-level specificity.
 
 ---
 
 ### Transcript 2: Weak Candidate (Backend Engineer, Technical)
 
-**Intake Inputs:**
-- **Role**: Backend Engineer
-- **Difficulty**: Medium
+**Intake:**
+- **Role:** Backend Engineer → resolved to `Backend_Engineer` ✓
+- **Focus:** Technical
+- **Background:** "CS graduate, some web development experience"
 
 **Turn 1**
-- **Interviewer**: Let's discuss database connections. Why is using a database connection pool important for a high-traffic web service?
-- **Candidate**: A connection pool is good because it keeps the database from crashing. It puts all the connections in a pool so the web service can use them.
-- **Evaluator (JSON)**:
+- **Interviewer:** Hi, I'm the tech lead on our platform team. Let's start — can you explain why connection pooling matters for a high-traffic backend service?
+- **Candidate:** Connection pooling is good because it keeps connections in a pool so the database doesn't crash. It makes things faster.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 3,
-    "critique": "Vague answer. Missed the core concepts of connection overhead (TCP/handshake costs) and reusing existing connections rather than opening/closing new ones per request.",
-    "concepts_covered": []
+    "scores": { "relevance": 4, "specificity": 2, "structure": 3, "confidence": 3 },
+    "overall_rating": "weak",
+    "concepts_covered": [],
+    "interviewer_direction": "Candidate was vague. Probe deeper: ask specifically about what makes opening a new connection expensive (TCP handshake, TLS negotiation, memory allocation).",
+    "key_observations": "Buzzword-level answer. Missed the core cost model of per-connection overhead."
   }
   ```
+  *Routing: weak → follow up on same concept*
 
 **Turn 2**
-- **Interviewer**: Could you elaborate on *why* opening a new connection for every request is expensive? What exactly is happening under the hood?
-- **Candidate**: I think it's because the database has to check your password every time, which takes a while.
-- **Evaluator (JSON)**:
+- **Interviewer:** Could you elaborate on what exactly makes opening a new database connection expensive? What's happening at the network level?
+- **Candidate:** I think it's because the database has to authenticate you each time, which takes a while.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 2,
-    "critique": "Incorrect focus. While authentication is a factor, the primary costs are TCP handshakes, network latency, and memory allocation on the DB server.",
-    "concepts_covered": []
+    "scores": { "relevance": 3, "specificity": 2, "structure": 4, "confidence": 2 },
+    "overall_rating": "weak",
+    "concepts_covered": [],
+    "interviewer_direction": "Still struggling. Already followed up once — move to a fresh topic to maintain interview diversity.",
+    "key_observations": "Incorrect focus. Auth is minor; primary costs are TCP 3-way handshake, TLS negotiation, and server-side memory allocation."
   }
   ```
+  *Routing: weak but consecutive follow-up limit reached → force move to new topic*
 
 **Turn 3**
-- **Interviewer**: Let's pivot to microservices. Can you explain the Circuit Breaker pattern and when you would use it?
-- **Candidate**: The circuit breaker is when you break the microservice into smaller parts. If one part breaks, the rest of the circuit is fine.
-- **Evaluator (JSON)**:
+- **Interviewer:** Let's switch topics. Can you explain the Circuit Breaker pattern and when you'd use it in a microservices architecture?
+- **Candidate:** The circuit breaker is when you break the microservice into smaller parts so if one breaks the rest are fine.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 1,
-    "critique": "Fundamental misunderstanding of the pattern. The candidate confused the Circuit Breaker pattern (preventing cascading failures by failing fast) with the general concept of decoupling microservices.",
-    "concepts_covered": []
+    "scores": { "relevance": 2, "specificity": 1, "structure": 3, "confidence": 3 },
+    "overall_rating": "weak",
+    "concepts_covered": [],
+    "interviewer_direction": "Fundamental misunderstanding. Candidate confused circuit breaker pattern with microservice decomposition. Follow up with a simpler framing.",
+    "key_observations": "Confused the Circuit Breaker pattern (fail-fast to prevent cascading failures) with general service decomposition."
   }
   ```
 
 **Turn 4**
-- **Interviewer**: Actually, the Circuit Breaker pattern is used to stop making requests to a failing service. Have you used any specific caching strategies to reduce database load?
-- **Candidate**: I don't know much about caching strategies, sorry.
-- **Evaluator (JSON)**:
+- **Interviewer:** The Circuit Breaker is actually about stopping calls to a failing downstream service to prevent cascade failures. Moving on — what caching strategies have you used to reduce database load?
+- **Candidate:** I don't know much about caching strategies, sorry.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 0,
-    "critique": "Candidate explicitly stated they do not know.",
-    "concepts_covered": []
+    "scores": { "relevance": 1, "specificity": 1, "structure": 3, "confidence": 2 },
+    "overall_rating": "weak",
+    "concepts_covered": [],
+    "interviewer_direction": "Candidate admitted unfamiliarity. Move to next concept.",
+    "key_observations": "Explicit 'I don't know' — handled as specified in edge case rules."
   }
   ```
 
-**Coach Report Summary:**
-```markdown
-# Interview Feedback Report: Backend Engineer
+*(Interview continues through 7 turns with consistently low scores)*
 
-## Overall Performance
-**Needs Improvement.** The interview revealed significant gaps in foundational backend concepts, particularly around database interactions and distributed systems patterns.
-
-## Strengths
-- You were honest about what you didn't know in the final question, which is better than guessing.
-
-## Areas for Improvement
-- **Database Connection Lifecycles**: Review how TCP connections work and why connection pooling is necessary to avoid overhead (handshakes, memory allocation).
-- **Design Patterns**: The Circuit Breaker pattern is critical for microservices to prevent cascading failures. It's recommended to study common distributed systems patterns (Retry, Circuit Breaker, Bulkhead).
-- **Caching**: Caching (e.g., Redis, Memcached) is a staple of backend engineering. Study strategies like Cache-Aside, Write-Through, and Write-Behind.
-```
+**Coach Report (Final Verdict: Not Good Hire):**
+> **Overall:** The interview revealed significant gaps in foundational backend engineering concepts.
+>
+> **Areas for Improvement:** In Turn 1, you described connection pooling as "it makes things faster" — a strong answer would explain TCP handshake costs (~1.5 RTT), TLS negotiation overhead, and server-side memory allocation per connection. In Turn 3, you confused the Circuit Breaker pattern with microservice decomposition — these are fundamentally different concepts.
+>
+> **Verdict: Not Good Hire** — averaged 2.2 across all dimensions. Needs significant foundational study before re-attempting.
 
 ---
 
-### Transcript 3: Tricky/Edge Case (Unknown Role → Fallback + Off-topic)
+### Transcript 3: Tricky/Edge Case (Unrecognized Role → Fallback + Off-topic + Partial)
 
-**Intake Inputs:**
-- **Role**: Blockchain Developer (Falls back to General Software Engineering mode)
-- **Difficulty**: Medium
+**Intake:**
+- **Role:** Blockchain Developer → **not recognized** → falls back to `General_Interview_Mode` ⚠️
+- **Focus:** Technical
+- **Background:** "Worked on Solana smart contracts for 1 year"
 
 **Turn 1**
-- **Interviewer**: We don't have specific modules for Blockchain, so let's focus on general software engineering principles. Can you explain the difference between optimistic and pessimistic locking in a database?
-- **Candidate**: Optimistic locking is when you just hope the transaction works, and pessimistic is when you assume it will fail so you retry it a lot. Also, speaking of databases, I think Solana's state compression is really cool for reducing on-chain storage costs.
-- **Evaluator (JSON)**:
+- **Interviewer:** Welcome. I see you have a background in blockchain — we'll be covering general software engineering fundamentals today. Let's start: can you explain the difference between optimistic and pessimistic locking?
+- **Candidate:** Optimistic locking is when you just hope things work out, and pessimistic is when you assume it'll fail so you lock everything. By the way, this reminds me of how Solana handles account locking — they use optimistic concurrency for parallel transaction processing.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 2,
-    "critique": "Incorrect definition of database locking mechanisms. Candidate went off-topic to discuss Solana rather than addressing concurrency control. Optimistic locking uses version numbers/timestamps, while pessimistic locks the row immediately.",
-    "concepts_covered": []
+    "scores": { "relevance": 3, "specificity": 2, "structure": 4, "confidence": 5 },
+    "overall_rating": "weak",
+    "concepts_covered": [],
+    "interviewer_direction": "Candidate went off-topic to Solana. The definitions were oversimplified. Gently redirect: ask specifically about what happens when two transactions conflict under optimistic locking.",
+    "key_observations": "Incorrect definitions ('hope' vs 'assume fail') and off-topic tangent to Solana."
   }
   ```
+  *Routing: weak → follow up*
 
 **Turn 2**
-- **Interviewer**: Let's bring it back to general concurrency. In optimistic locking, we typically use a version number. What happens if two transactions try to update the same row simultaneously with optimistic locking?
-- **Candidate**: The first one to commit succeeds. The second one will see that the version number changed and it will throw an error, so the application has to handle that error and maybe try again.
-- **Evaluator (JSON)**:
+- **Interviewer:** Let's stay focused on databases. With optimistic locking, what specifically happens when two transactions try to update the same row at the same time?
+- **Candidate:** The first transaction to commit succeeds. The second one detects that the version number changed since it started, so it gets a conflict error. The application then has to decide whether to retry or abort — usually you retry with exponential backoff.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 8,
-    "critique": "Good recovery. Accurately described the mechanics of optimistic locking conflict resolution (version checking and application-level retries).",
-    "concepts_covered": ["Optimistic Locking", "Concurrency Control", "Version checking"]
+    "scores": { "relevance": 8, "specificity": 7, "structure": 7, "confidence": 7 },
+    "overall_rating": "strong",
+    "concepts_covered": ["Problem Decomposition"],
+    "interviewer_direction": "Good recovery. Candidate correctly explained version-based conflict detection. Move to next concept.",
+    "key_observations": "Solid answer — version checking, conflict detection, and retry with backoff."
   }
   ```
+  *Routing: strong → move to next random concept*
 
 **Turn 3**
-- **Interviewer**: Good. Now, how would you design an API rate limiter for a distributed application?
-- **Candidate**: I would just use a simple counter in a database table. Every time a user makes a request, increment the counter. If it's over the limit, block them.
-- **Evaluator (JSON)**:
+- **Interviewer:** Nice recovery. Now, how would you design an API rate limiter for a service handling thousands of requests per second?
+- **Candidate:** I'd use a counter per user in Redis with a TTL matching the rate window. On each request, increment the counter — if it exceeds the limit, return 429. For distributed systems, you'd need a sliding window approach rather than fixed windows to avoid burst issues at window boundaries.
+- **Evaluator JSON:**
   ```json
   {
-    "score": 4,
-    "critique": "Partial answer. While a counter works conceptually, doing a database write per request introduces massive latency. Missed distributed caching (Redis) and specific algorithms like Token Bucket or Sliding Window.",
-    "concepts_covered": ["Rate Limiting", "Counters"]
+    "scores": { "relevance": 7, "specificity": 5, "structure": 6, "confidence": 6 },
+    "overall_rating": "partial",
+    "concepts_covered": [],
+    "interviewer_direction": "Candidate mentioned Redis and sliding windows but was vague on the sliding window implementation. Probe: ask how the sliding window algorithm actually works.",
+    "key_observations": "Good direction but lacked specificity on sliding window mechanics (e.g., sorted set with timestamps vs. hybrid fixed/sliding)."
+  }
+  ```
+  *Routing: partial → follow up on same concept*
+
+**Turn 4**
+- **Interviewer:** You mentioned sliding windows — can you walk me through how a sliding window rate limiter actually works under the hood?
+- **Candidate:** You keep a sorted set in Redis where each entry is a timestamp of a request. On each new request, you remove all entries older than the window size, count what's left, and compare against the limit. If under limit, add the new timestamp and allow. The downside is memory — each request stores an entry, so for high-traffic APIs you might prefer a token bucket instead.
+- **Evaluator JSON:**
+  ```json
+  {
+    "scores": { "relevance": 8, "specificity": 7, "structure": 8, "confidence": 7 },
+    "overall_rating": "strong",
+    "concepts_covered": ["Trade-off Analysis"],
+    "interviewer_direction": "Strong follow-up. Candidate explained sorted set mechanics and even noted the memory trade-off with token bucket alternative. Move on.",
+    "key_observations": "Good — explained sorted set approach, cleanup logic, and proactively compared with token bucket."
   }
   ```
 
-**Coach Report Summary:**
-```markdown
-# Interview Feedback Report: General Software Engineering (Fallback)
+*(Interview continues with mixed results through 7 turns)*
 
-## Overall Performance
-**Mixed.** You had a rocky start with some conceptual misunderstandings and off-topic tangents, but recovered well when prompted with clarifying questions.
-
-## Strengths
-- **Adaptability**: After struggling with the initial locking question, you correctly deduced the mechanics of optimistic locking when given a hint about version numbers.
-
-## Areas for Improvement
-- **Focus**: Try to answer the specific question asked before pivoting to niche interests (like Solana state compression) unless it directly answers the prompt.
-- **Scalability**: Your API rate limiter design using a standard database table would not scale. Review distributed system concepts, specifically using in-memory stores like Redis and standard rate-limiting algorithms (Token Bucket, Leaky Bucket).
-- **Concurrency Fundamentals**: Ensure you have a solid grasp of basic database isolation levels and locking mechanisms.
-```
-
+**Coach Report (Final Verdict: Tricky Select):**
+> **Overall:** Mixed performance with a notable pattern: you struggled initially on several topics but recovered well when given focused follow-up questions.
+>
+> **Strengths:** In Turn 2, you recovered impressively on optimistic locking — "The second one detects that the version number changed since it started, so it gets a conflict error." In Turn 4, you proactively compared sliding window vs. token bucket trade-offs.
+>
+> **Areas for Improvement:** In Turn 1, you went off-topic to discuss Solana when asked about database locking. In a real interview, answer the specific question first before drawing parallels. Your initial definitions of optimistic/pessimistic locking were oversimplified.
+>
+> **Verdict: Tricky Select** — average scores around 5.5. You clearly have technical intuition and can reason well when prompted, but initial answers tend to be shallow or off-topic. With focused preparation on giving structured first responses, you'd be a much stronger candidate.
